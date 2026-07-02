@@ -1,121 +1,123 @@
-# Slot Machine — Game Math Model
+# 🎰 Slot Machine RTP Analysis
 
-A complete mathematical model for a 3-reel, 5-payline slot machine. Built as a portfolio project for Game Mathematician roles in the iGaming industry.
+Mathematical modelling and Monte Carlo simulation of a 3-reel slot machine to compute the exact Return to Player (RTP) and evaluate key game performance metrics including house edge, hit frequency, and volatility.
 
----
-
-## What this project covers
-
-The two things every Game Mathematician must be able to do:
-
-1. **Prove the RTP mathematically** — enumerate every possible outcome, multiply by its probability, sum them up. No guessing. Exact numbers.
-
-2. **Verify with simulation** — run 1,000,000 random spins and confirm the simulated RTP converges to the theoretical one. This is the Law of Large Numbers in practice.
+<p align="center">
+  <img src="outputs/slot_analysis.png" alt="Slot Machine Analysis" width="900">
+</p>
 
 ---
 
-## Game design
+## Project Snapshot
 
-**Reel configuration** — 3 reels, 20 stops each (8,000 total combinations)
+| Category | Details |
+|----------|---------|
+| **Domain** | Game Mathematics |
+| **Language** | Python |
+| **Approach** | Analytical Enumeration + Monte Carlo Simulation |
+| **Game Type** | 3-Reel Slot Machine |
+| **Simulation Size** | 1,000,000 Spins |
 
-| Symbol | Reel 1 | Reel 2 | Reel 3 |
-|--------|--------|--------|--------|
-| SEVEN  | 1      | 1      | 1      |
-| BAR    | 2      | 2      | 2      |
-| BELL   | 3      | 4      | 3      |
-| CHERRY | 5      | 4      | 5      |
-| LEMON  | 9      | 9      | 9      |
+---
 
-The number of stops per symbol is how you control RTP. More stops = higher probability = more impact on RTP. LEMON has 9 stops but pays nothing — it's the blank equivalent.
+## Features
 
-**Paytable**
-
-| Combination | Payout | Probability | RTP Contribution |
-|---|---|---|---|
-| SEVEN \| SEVEN \| SEVEN | 321x | 1/8000 | 4.01% |
-| BAR \| BAR \| BAR | 80x | 8/8000 | 8.00% |
-| BELL \| BELL \| BELL | 32x | 36/8000 | 14.40% |
-| CHERRY \| CHERRY \| CHERRY | 16x | 100/8000 | 20.00% |
-| CHERRY \| CHERRY \| any | 8x | various | 28.75% |
-| CHERRY \| any \| any | 3x | various | 19.44% |
+- Exact RTP calculation using exhaustive outcome enumeration
+- Monte Carlo simulation for empirical validation
+- RTP convergence analysis
+- House edge estimation
+- Hit frequency and volatility analysis
+- Automated statistical reports and visualizations
 
 ---
 
 ## Results
 
 | Metric | Value |
-|---|---|
+|---------|-------:|
 | **Theoretical RTP** | **94.60%** |
-| Simulated RTP (1M spins) | 94.42% |
-| Math vs simulation gap | 0.18% ✓ |
-| House edge | 5.40% |
-| Hit frequency | 11.63% (1 in 9 spins) |
-| Volatility (std dev) | 5.46 — HIGH |
-| Sessions ending in profit | 31.9% |
+| **Simulated RTP** | **94.42%** |
+| **Difference** | **0.18%** |
+| **House Edge** | **5.40%** |
+| **Hit Frequency** | **11.63%** |
+| **Volatility (Std. Dev.)** | **5.46** |
+| **Profitable Sessions** | **31.9%** |
 
-The 0.18% gap between theoretical and simulated RTP is entirely expected — it's random variance that disappears further toward infinity. At 10M spins it would be ~0.05%.
+<p align="center">
+  <img src="outputs/rtp_simulation.png" alt="RTP Simulation" width="850">
+</p>
 
----
-
-## Key concepts explained
-
-**RTP (Return to Player)**
-If RTP = 94.6%, a player betting R$1,000 over a long session gets back ~R$946 on average. The casino keeps ~R$54. This is an average over millions of spins, not a guarantee per session.
-
-**House edge**
-100% - RTP = 5.4%. This is the casino's profit margin per coin wagered.
-
-**Hit frequency**
-11.63% means roughly 1 in every 9 spins produces any win. Between wins, a player goes through ~8 losing spins on average.
-
-**Volatility**
-This game has HIGH volatility (std dev 5.46). That means player balances swing a lot during play. In 10,000 simulated sessions of 500 spins, only 31.9% ended in profit. The rest lost — but some wins were very large (jackpot 321x). High volatility games are more exciting but riskier for players.
-
-**Law of large numbers**
-The RTP convergence chart shows the simulated RTP starting wild (sometimes 200%, sometimes 20%) in the first few thousand spins, then steadily settling toward 94.6% as spins accumulate. This is why casinos make money — individual players experience high variance, but the casino's aggregate result is predictable.
+The simulation closely matches the analytical RTP, validating the mathematical model through large-scale random sampling.
 
 ---
 
-## How to run
+## Repository Structure
 
-```bash
-# Install dependencies
-pip install pandas numpy matplotlib
-
-# Run the model
-python src/slot_math.py
-```
-
-Outputs go to `outputs/`.
-
----
-
-## Project structure
-
-```
-slot-math-model/
+```text
+slot-machine-rtp-analysis/
+│
 ├── src/
-│   └── slot_math.py          ← full model: math + simulation + charts
+│   ├── analytical_rtp.py
+│   ├── config.py
+│   ├── engine.py
+│   ├── simulate.py
+│   └── slot_math.py
+│
 ├── outputs/
-│   ├── slot_analysis.png     ← RTP convergence + paytable + session chart
-│   ├── paytable_analysis.csv ← each winning combo, probability, RTP contribution
-│   ├── rtp_convergence.csv   ← RTP tracked every 10,000 spins
-│   └── summary.csv           ← key metrics
+│   ├── slot_analysis.png
+│   ├── rtp_simulation.png
+│   ├── paytable_analysis.csv
+│   ├── rtp_convergence.csv
+│   ├── rtp_seed_stability.csv
+│   ├── rtp_summary.csv
+│   └── summary.csv
+│
+├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 
 ---
 
-## Things I would extend with more time
+## Installation
 
-- **Multi-payline evaluation** — check all 5 paylines per spin independently (increases hit frequency)
-- **Wild symbols** — wilds substitute for any symbol; requires updating the combo evaluation logic
-- **Bonus trigger math** — scatter symbols triggering free spins; track bonus contribution to overall RTP separately
-- **Player session risk modelling** — ruin probability: given a starting bankroll of X coins, what's the probability of going broke before N spins?
-- **Math sheet** — formal Excel-style document with variance, 95th percentile outcomes, max win cap — standard deliverable in the industry
+```bash
+git clone https://github.com/ShyamMath/slot-machine-rtp-analysis.git
+cd slot-machine-rtp-analysis
+pip install -r requirements.txt
+```
 
 ---
 
-## Tech stack
+## Run
 
-Python 3 · NumPy · pandas · matplotlib · itertools
+```bash
+python src/slot_math.py
+```
+
+All plots and statistical reports are automatically generated in the `outputs/` directory.
+
+---
+
+## Tech Stack
+
+- Python
+- NumPy
+- pandas
+- Matplotlib
+
+---
+
+## Future Enhancements
+
+- Multi-payline evaluation
+- Wild and Scatter symbols
+- Bonus game mechanics
+- Progressive jackpot modelling
+- Configurable reel strips and paytables
+
+---
+
+## Author
+
+**Shyam Veer Yadav**s · matplotlib · itertools
