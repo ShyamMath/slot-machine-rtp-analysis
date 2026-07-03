@@ -75,16 +75,16 @@ g++ -O3 -std=c++17 -o slot_sim slot_sim.cpp
 
 ```
 src/
-  config.py       reel strips, paytable
-  analytical.py   exact RTP via full enumeration
-  simulate.py     Monte Carlo verification, volatility, session risk
-  plotting.py     results chart
-  main.py         runs everything, saves outputs
+├── config.py       reel strips, paytable
+├── analytical.py   exact RTP via full enumeration
+├── simulate.py     Monte Carlo verification, volatility, session risk
+├── plotting.py     results chart
+└── main.py         runs everything, saves outputs
 cpp/
-  slot_sim.cpp    C++ port of the simulation core
+└── slot_sim.cpp    C++ port of the simulation core
 outputs/
-  slot_analysis.png, paytable_analysis.csv, rtp_convergence.csv,
-  summary.csv, cpp_simulation_summary.csv
+└── slot_analysis.png, paytable_analysis.csv, rtp_convergence.csv,
+    summary.csv, cpp_simulation_summary.csv
 ```
 
 ## Extensions
