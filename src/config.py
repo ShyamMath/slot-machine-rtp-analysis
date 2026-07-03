@@ -1,133 +1,43 @@
 """
-config.py
----------
-This file holds the actual game design: reel strips, paylines, and paytable.
+Game design for a 3-reel, single-payline slot machine.
 
-Think of a "reel strip" as a physical wheel with symbols printed on it.
-When you spin, the wheel stops at a random position, and you see whichever
-3 symbols land in the window. The MORE times a symbol appears on the strip,
-the more LIKELY it is to show up. This is how real slot machines control odds
-without needing "fake" probabilities — the probability is built directly into
-how many times each symbol physically appears on the wheel.
-
-Each reel strip below has exactly 64 symbol slots. 64 was chosen because
-it's a clean power of 2, which historically maps well to physical reel
-mechanisms and random number generators, though modern slots can use
-any strip length.
+A reel strip is a list of symbols. Spinning picks one random stop per
+reel; how many times a symbol appears on a strip controls how often it
+lands. That's the entire mechanism behind RTP tuning in a real machine.
 """
 
-# ---------------------------------------------------------------
-# REEL STRIPS
-# ---------------------------------------------------------------
-# Each dictionary says "this symbol appears N times on this reel".
-# Reels 1 and 5 are slightly more generous (more wilds/scatters) —
-# a common design trick to make near-misses on the edges feel more frequent,
-# which keeps players engaged even on losing spins.
+SYMBOLS = ("SEVEN", "BAR", "BELL", "CHERRY", "LEMON")
 
-REEL_DESIGNS = {
-    1: {"CHERRY": 16, "LEMON": 16, "BELL": 12, "BAR": 8, "STAR": 5, "WILD": 3, "SCATTER": 4},
-    2: {"CHERRY": 15, "LEMON": 15, "BELL": 11, "BAR": 8, "STAR": 5, "WILD": 3, "SCATTER": 4, "BLANK": 3},
-    3: {"CHERRY": 15, "LEMON": 15, "BELL": 11, "BAR": 7, "STAR": 4, "WILD": 3, "SCATTER": 4, "BLANK": 5},
-    4: {"CHERRY": 15, "LEMON": 15, "BELL": 11, "BAR": 8, "STAR": 5, "WILD": 3, "SCATTER": 4, "BLANK": 3},
-    5: {"CHERRY": 16, "LEMON": 16, "BELL": 12, "BAR": 8, "STAR": 5, "WILD": 3, "SCATTER": 4},
-}
+# stops per symbol, per reel (20 stops per reel)
+REEL_1 = ["SEVEN"] * 1 + ["BAR"] * 2 + ["BELL"] * 3 + ["CHERRY"] * 5 + ["LEMON"] * 9
+REEL_2 = ["SEVEN"] * 1 + ["BAR"] * 2 + ["BELL"] * 4 + ["CHERRY"] * 4 + ["LEMON"] * 9
+REEL_3 = ["SEVEN"] * 1 + ["BAR"] * 2 + ["BELL"] * 3 + ["CHERRY"] * 5 + ["LEMON"] * 9
+REELS = [REEL_1, REEL_2, REEL_3]
+REEL_SIZES = [len(r) for r in REELS]
 
-# Sanity check: every reel strip must sum to exactly 64 symbols.
-# If this fails, the reel design is broken and probabilities won't make sense.
-for reel_num, design in REEL_DESIGNS.items():
-    total = sum(design.values())
-    assert total == 64, f"Reel {reel_num} has {total} symbols, expected 64"
+for i, reel in enumerate(REELS, 1):
+    assert len(reel) == 20, f"Reel {i} has {len(reel)} stops, expected 20"
 
+TOTAL_COMBINATIONS = REEL_SIZES[0] * REEL_SIZES[1] * REEL_SIZES[2]  # 8,000
 
-def build_strip(design: dict) -> list:
-    """
-    Turn a {symbol: count} dictionary into an actual list of symbols.
-    Example: {"CHERRY": 2, "BAR": 1} -> ["CHERRY", "CHERRY", "BAR"]
-    """
-    strip = []
-    for symbol, count in design.items():
-        strip.extend([symbol] * count)
-    return strip
-
-
-# Pre-build all 5 reel strips once, so we don't rebuild them on every spin
-REELS = {reel_num: build_strip(design) for reel_num, design in REEL_DESIGNS.items()}
-
-
-# ---------------------------------------------------------------
-# PAYLINES
-# ---------------------------------------------------------------
-# A payline is a specific path across the 5x3 grid that we check for matches.
-# Row numbering: 0 = top row, 1 = middle row, 2 = bottom row.
-# Each payline is a list of 5 numbers — one row-position per reel.
-#
-# Example: [1,1,1,1,1] means "check the middle row straight across".
-# Example: [0,1,2,1,0] means "top, middle, bottom, middle, top" (a V shape).
-
-PAYLINES = [
-    [1, 1, 1, 1, 1],   # 1.  Straight middle
-    [0, 0, 0, 0, 0],   # 2.  Straight top
-    [2, 2, 2, 2, 2],   # 3.  Straight bottom
-    [0, 1, 2, 1, 0],   # 4.  V shape
-    [2, 1, 0, 1, 2],   # 5.  Inverted V
-    [0, 0, 1, 2, 2],   # 6.  Diagonal down
-    [2, 2, 1, 0, 0],   # 7.  Diagonal up
-    [1, 0, 0, 0, 1],   # 8.
-    [1, 2, 2, 2, 1],   # 9.
-    [0, 1, 1, 1, 0],   # 10.
-    [2, 1, 1, 1, 2],   # 11.
-    [1, 0, 1, 0, 1],   # 12. Zigzag
-    [1, 2, 1, 2, 1],   # 13. Zigzag
-    [0, 1, 0, 1, 0],   # 14.
-    [2, 1, 2, 1, 2],   # 15.
-    [0, 2, 0, 2, 0],   # 16.
-    [2, 0, 2, 0, 2],   # 17.
-    [1, 1, 0, 1, 1],   # 18.
-    [1, 1, 2, 1, 1],   # 19.
-    [0, 2, 1, 2, 0],   # 20.
-]
-
-assert len(PAYLINES) == 20
-for p in PAYLINES:
-    assert len(p) == 5
-    assert all(row in (0, 1, 2) for row in p)
-
-
-# ---------------------------------------------------------------
-# PAYTABLE
-# ---------------------------------------------------------------
-# How much each symbol pays, depending on how many in a row you get
-# (3, 4, or 5 matching symbols starting from reel 1).
-# Payout is a MULTIPLIER of the bet placed on that single line.
-#
-# Design principle: symbols that appear MORE often on the reels pay LESS,
-# and rare symbols pay MORE. This keeps the math balanced — a symbol that's
-# easy to land but pays huge would break the RTP target.
-#
-# These exact numbers were reached through iterative testing (see
-# src/calibrate_rtp.py) until the simulated RTP landed near our 96% target.
-
+# One payline. Payout is a multiplier of the 1-coin bet.
 PAYTABLE = {
-    "CHERRY":  {3: 3,   4: 13,  5: 30},
-    "LEMON":   {3: 3,   4: 13,  5: 30},
-    "BELL":    {3: 9,   4: 30,  5: 95},
-    "BAR":     {3: 25,  4: 95,  5: 300},
-    "STAR":    {3: 50,  4: 190, 5: 600},
-    "WILD":    {3: 95,  4: 300, 5: 1500},
+    ("SEVEN",  "SEVEN",  "SEVEN"):  321,   # jackpot
+    ("BAR",    "BAR",    "BAR"):     80,
+    ("BELL",   "BELL",   "BELL"):    32,
+    ("CHERRY", "CHERRY", "CHERRY"):  16,
+    ("CHERRY", "CHERRY", "LEMON"):    8,
+    ("CHERRY", "CHERRY", "BAR"):      8,
+    ("CHERRY", "CHERRY", "BELL"):     8,
+    ("CHERRY", "CHERRY", "SEVEN"):    8,
+    ("CHERRY", "LEMON",  "LEMON"):    3,
+    ("CHERRY", "BAR",    "BAR"):      3,
+    ("CHERRY", "BELL",   "BELL"):     3,
 }
 
-# SCATTER doesn't need to land on a payline — it pays based on how many
-# appear ANYWHERE on the grid (any reel, any row). This is standard in
-# real slots and usually also triggers a bonus round (free spins).
-SCATTER_PAYS = {3: 3, 4: 13, 5: 60}
-
-# WILD substitutes for any symbol except SCATTER, the same way a Joker
-# would in a card game — it completes whatever combination it's part of.
+BET_PER_SPIN = 1  # 1 coin, 1 payline
 
 
-# ---------------------------------------------------------------
-# BET STRUCTURE
-# ---------------------------------------------------------------
-BET_PER_LINE = 1          # cost of activating ONE payline
-NUM_LINES = len(PAYLINES) # 20
-TOTAL_BET_PER_SPIN = BET_PER_LINE * NUM_LINES   # 20
+def get_payout(s1: str, s2: str, s3: str) -> int:
+    """Payout multiplier for a 3-symbol combination, 0 if it doesn't win."""
+    return PAYTABLE.get((s1, s2, s3), 0)

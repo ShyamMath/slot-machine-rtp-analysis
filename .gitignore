@@ -1,5 +1,4 @@
 __pycache__/
 *.pyc
-.env
-venv/
+cpp/slot_sim
 .DS_Store
